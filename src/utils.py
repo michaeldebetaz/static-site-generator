@@ -31,20 +31,18 @@ def split_nodes_delimiter(
     old_nodes: list[TextNode], delimiter: str, text_type: TextType
 ) -> list[TextNode]:
     new_nodes = []
-    for node in old_nodes:
-        print(f"\n{node.text}")
-        strings = node.text.split(delimiter)
+    for old_node in old_nodes:
+        strings = old_node.text.split(delimiter)
         if len(strings) < 3:
-            new_nodes = old_nodes.copy()
+            new_nodes.append(old_node)
         else:
             for i, s in enumerate(strings):
-                print(f"\n{i=} --- {s=}")
                 if i % 2 == 0:
                     if len(s) > 0:
-                        new_nodes.append(TextNode(s, node.text_type))
+                        new_nodes.append(TextNode(s, old_node.text_type))
                 if i % 2 != 0:
                     if i == len(strings) - 1:
-                        new_nodes.append(TextNode(s, node.text_type))
+                        new_nodes.append(TextNode(s, old_node.text_type))
                     else:
                         new_nodes.append(TextNode(s, text_type))
     return new_nodes
@@ -63,7 +61,7 @@ def split_nodes_image(old_nodes: list[TextNode]) -> list[TextNode]:
     for old_node in old_nodes:
         images = extract_markdown_images(old_node.text)
         if len(images) < 1:
-            new_nodes = old_nodes.copy()
+            new_nodes.append(old_node)
         else:
             text_so_far = old_node.text
             for image in images:
@@ -88,7 +86,7 @@ def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]:
     for old_node in old_nodes:
         links = extract_markdown_links(old_node.text)
         if len(links) < 1:
-            new_nodes = old_nodes.copy()
+            new_nodes.append(old_node)
         else:
             text_so_far = old_node.text
             for link in links:
@@ -110,33 +108,10 @@ def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]:
 
 def text_to_textnodes(text: str) -> list[TextNode]:
     nodes = [TextNode(text, TextType.TEXT)]
-    print("\n-------------------")
-    print("Original:")
-    print(nodes)
-    print("-------------------\n")
     nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
-    print("\n-------------------")
-    print("Bold:")
-    print(nodes)
-    print("-------------------\n")
     nodes = split_nodes_delimiter(nodes, "*", TextType.ITALIC)
-    print("\n-------------------")
-    print("Italic:")
-    print(nodes)
-    print("-------------------\n")
-    # nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
-    # print("\n-------------------")
-    # print("Code:")
-    # print(nodes)
-    # print("-------------------\n")
-    # nodes = split_nodes_image(nodes)
-    # print("\n-------------------")
-    # print("Image:")
-    # print(nodes)
-    # print("-------------------\n")
-    # nodes = split_nodes_link(nodes)
-    # print("\n-------------------")
-    # print("Link:")
-    # print(nodes)
-    # print("-------------------\n")
+    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+    nodes = split_nodes_image(nodes)
+    nodes = split_nodes_link(nodes)
+
     return nodes

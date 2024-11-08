@@ -1,5 +1,6 @@
 import re
 from collections.abc import Sequence
+from pathlib import Path
 
 from block import BlockType, block_to_block_type, markdown_to_blocks
 from htmlnode import LeafNode, ParentNode
@@ -141,18 +142,48 @@ def text_to_children(text: str) -> Sequence[ParentNode | LeafNode]:
 
             case BlockType.QUOTE:
                 lines = block.split("\n")
-                children = [LeafNode(tag="p", value=line[1:]) for line in lines]
+
+                if len(lines) < 2:
+                    value = lines[0].lstrip(">").lstrip()
+                    children = [LeafNode(tag=None, value=value)]
+                else:
+                    children = [
+                        LeafNode(tag="p", value=line.lstrip(">").lstrip())
+                        for line in lines
+                    ]
+
                 nodes.append(ParentNode(tag="blockquote", children=children))
 
             case BlockType.UNORDERED_LIST:
                 lines = block.split("\n")
-                children = [LeafNode(tag="li", value=line[2:]) for line in lines]
-                nodes.append(ParentNode(tag="ul", children=children))
+                list_items: list[ParentNode | LeafNode] = []
+                for line in lines:
+                    text = line[2:]
+                    text_nodes = text_to_textnodes(text)
+                    children = [text_node_to_html_node(t) for t in text_nodes]
+                    if len(children) < 2:
+                        value = children[0].value
+                        assert isinstance(value, str)
+                        list_items.append(LeafNode(tag="li", value=value))
+                    else:
+                        list_items.append(ParentNode(tag="li", children=children))
+                nodes.append(ParentNode(tag="ul", children=list_items))
 
             case BlockType.ORDERED_LIST:
                 lines = block.split("\n")
-                children = [LeafNode(tag="li", value=line[3:]) for line in lines]
-                nodes.append(ParentNode(tag="ol", children=children))
+
+                list_items: list[ParentNode | LeafNode] = []
+                for line in lines:
+                    text = line[3:]
+                    text_nodes = text_to_textnodes(text)
+                    children = [text_node_to_html_node(t) for t in text_nodes]
+                    if len(children) < 2:
+                        value = children[0].value
+                        assert isinstance(value, str)
+                        list_items.append(LeafNode(tag="li", value=value))
+                    else:
+                        list_items.append(ParentNode(tag="li", children=children))
+                nodes.append(ParentNode(tag="ol", children=list_items))
 
     return nodes
 
@@ -161,3 +192,47 @@ def markdown_to_html_node(markdown: str) -> ParentNode:
     children_nodes = text_to_children(markdown)
 
     return ParentNode(tag="div", children=children_nodes)
+
+
+def extract_title(markdown: str) -> str:
+    blocks = markdown_to_blocks(markdown)
+    HEADING_PREFIX = "# "
+
+    for block in blocks:
+        if block.startswith(HEADING_PREFIX):
+            return block.lstrip(HEADING_PREFIX)
+
+    raise Exception("No title found in markdown")
+
+
+def generate_page(from_path: Path, template_path: Path, dest_path: Path):
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+
+    with open(from_path, "r") as f:
+        markdown = f.read()
+
+    with open(template_path, "r") as f:
+        template = f.read()
+
+    title = extract_title(markdown)
+    html = markdown_to_html_node(markdown).to_html()
+    result = template.replace("{{ Title }}", title).replace("{{ Content }}", html)
+
+    if not dest_path.exists():
+        dest_path.touch()
+
+    with open(dest_path, "w") as f:
+        f.write(result)
+
+
+def generate_pages(src_path: Path, template_path: Path, dest_path: Path):
+    for path in src_path.iterdir():
+        if path.is_file():
+            name = path.stem
+            filename = f"{name}.html"
+            generate_page(path, template_path, dest_path / filename)
+
+        if path.is_dir():
+            new_dest_path = dest_path / path.name
+            new_dest_path.mkdir()
+            generate_pages(path, template_path, new_dest_path)

@@ -2,7 +2,6 @@ from typing import Sequence
 
 
 class HTMLNode:
-
     def __init__(
         self,
         tag: str | None,

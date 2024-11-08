@@ -1,7 +1,8 @@
 import unittest
 
-from textnode import TextNode, TextType
-from utils import (
+from textnode import (
+    TextNode,
+    TextType,
     extract_markdown_images,
     extract_markdown_links,
     split_nodes_delimiter,

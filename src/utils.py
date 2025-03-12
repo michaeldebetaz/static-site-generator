@@ -1,6 +1,7 @@
 import re
 from collections.abc import Sequence
 from pathlib import Path
+from urllib.parse import ParseResult
 
 from block import BlockType, block_to_block_type, markdown_to_blocks
 from htmlnode import LeafNode, ParentNode
@@ -206,7 +207,7 @@ def extract_title(markdown: str) -> str:
 
 
 def generate_page(
-    from_path: Path, template_path: Path, dest_path: Path, basepath: Path
+    from_path: Path, template_path: Path, dest_path: Path, basepath: ParseResult
 ):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
 
@@ -221,7 +222,7 @@ def generate_page(
     result = (
         template.replace("{{ Title }}", title)
         .replace("{{ Content }}", html)
-        .replace('href="/', f'href="{basepath}')
+        .replace('href="/', f'href="{basepath.geturl()}')
     )
 
     if not dest_path.exists():
@@ -232,7 +233,7 @@ def generate_page(
 
 
 def generate_pages(
-    src_path: Path, template_path: Path, dest_path: Path, basepath: Path
+    src_path: Path, template_path: Path, dest_path: Path, basepath: ParseResult
 ):
     for path in src_path.iterdir():
         if path.is_file():

@@ -1,6 +1,7 @@
 import os
 import shutil
 import sys
+import urllib.parse
 from pathlib import Path
 
 from utils import generate_pages
@@ -8,10 +9,11 @@ from utils import generate_pages
 
 def main():
     args = sys.argv
-    basepath = "/"
+    basepath_str = "/"
     if len(args) > 1:
-        basepath = args[1]
-    basepath = Path(basepath)
+        basepath_str = args[1]
+    basepath = urllib.parse.urlparse(basepath_str)
+
     static_dir = Path("static")
     content_dir = Path("content")
     template_path = Path("template.html")

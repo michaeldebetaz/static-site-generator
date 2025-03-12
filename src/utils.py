@@ -219,10 +219,12 @@ def generate_page(
 
     title = extract_title(markdown)
     html = markdown_to_html_node(markdown).to_html()
+    basepath_url = basepath.geturl()
     result = (
         template.replace("{{ Title }}", title)
         .replace("{{ Content }}", html)
-        .replace('href="/', f'href="{basepath.geturl()}')
+        .replace('href="/', f'href="{basepath_url}')
+        .replace('src="/', f'src="{basepath_url}')
     )
 
     if not dest_path.exists():

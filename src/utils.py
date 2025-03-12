@@ -205,7 +205,9 @@ def extract_title(markdown: str) -> str:
     raise Exception("No title found in markdown")
 
 
-def generate_page(from_path: Path, template_path: Path, dest_path: Path):
+def generate_page(
+    from_path: Path, template_path: Path, dest_path: Path, basepath: Path
+):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
 
     with open(from_path, "r") as f:
@@ -216,7 +218,11 @@ def generate_page(from_path: Path, template_path: Path, dest_path: Path):
 
     title = extract_title(markdown)
     html = markdown_to_html_node(markdown).to_html()
-    result = template.replace("{{ Title }}", title).replace("{{ Content }}", html)
+    result = (
+        template.replace("{{ Title }}", title)
+        .replace("{{ Content }}", html)
+        .replace('href="/', f'href="{basepath}')
+    )
 
     if not dest_path.exists():
         dest_path.touch()
@@ -225,14 +231,16 @@ def generate_page(from_path: Path, template_path: Path, dest_path: Path):
         f.write(result)
 
 
-def generate_pages(src_path: Path, template_path: Path, dest_path: Path):
+def generate_pages(
+    src_path: Path, template_path: Path, dest_path: Path, basepath: Path
+):
     for path in src_path.iterdir():
         if path.is_file():
             name = path.stem
             filename = f"{name}.html"
-            generate_page(path, template_path, dest_path / filename)
+            generate_page(path, template_path, dest_path / filename, basepath)
 
         if path.is_dir():
             new_dest_path = dest_path / path.name
             new_dest_path.mkdir()
-            generate_pages(path, template_path, new_dest_path)
+            generate_pages(path, template_path, new_dest_path, basepath)

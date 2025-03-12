@@ -1,2 +1,2 @@
 python3 src/main.py
-python3 -m http.server 8888 -d public
+python3 -m http.server 8888 -d docs

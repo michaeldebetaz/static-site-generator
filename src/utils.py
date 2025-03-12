@@ -148,10 +148,12 @@ def text_to_children(text: str) -> Sequence[ParentNode | LeafNode]:
                     value = lines[0].lstrip(">").lstrip()
                     children = [LeafNode(tag=None, value=value)]
                 else:
-                    children = [
-                        LeafNode(tag="p", value=line.lstrip(">").lstrip())
-                        for line in lines
-                    ]
+                    children = []
+                    for i, line in enumerate(lines):
+                        child = LeafNode(tag=None, value=line.lstrip(">").lstrip())
+                        children.append(child)
+                        if i < len(lines) - 1:
+                            children.append(LeafNode(tag=None, value="<br />"))
 
                 nodes.append(ParentNode(tag="blockquote", children=children))
 
